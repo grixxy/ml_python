@@ -19,7 +19,7 @@
 
 import numpy as np
 
-def featureNormalize(X):
+def featureNormalize_old(X):
 
     n = X.shape[1]
     X_norm = X
@@ -34,7 +34,15 @@ def featureNormalize(X):
         sigma[0,i] = np.std(X[:,i])
         X_norm[:,i] = X_norm[:,i]/sigma[0,i];
 
-    return X_norm
+    return X_norm, mu, sigma
+
+
+def featureNormalize(X):
+    mu = np.mean(X,axis=0)
+    X_norm = X-mu
+    sigma = np.std(X_norm,axis=0)
+    X_norm = X_norm/sigma
+    return X_norm, mu, sigma
 
 
 

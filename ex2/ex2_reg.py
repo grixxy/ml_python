@@ -7,6 +7,7 @@ from predict import predict
 from mapFeature import mapFeature
 import scipy.optimize as opt
 
+
 # Machine Learning Online Class - Exercise 2: Logistic Regression
 #
 #  Instructions
