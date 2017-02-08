@@ -8,7 +8,7 @@ from learningCurve import learningCurve
 from ex1.featureNormalize import featureNormalize
 from polyFeatures import polyFeatures
 from plotFit import plotFit
-
+from validationCurve import validationCurve
 '''
 %% Machine Learning Online Class
 %  Exercise 5 | Regularized Linear Regression and Bias-Variance
@@ -228,22 +228,16 @@ plt.show()
 %  lambda on a validation set. You will then use this to select the
 %  "best" lambda value.
 %
-
-[lambda_vec, error_train, error_val] = ...
-    validationCurve(X_poly, y, X_poly_val, yval);
-
-close all;
-plot(lambda_vec, error_train, lambda_vec, error_val);
-legend('Train', 'Cross Validation');
-xlabel('lambda');
-ylabel('Error');
-
-fprintf('lambda\t\tTrain Error\tValidation Error\n');
-for i = 1:length(lambda_vec)
-	fprintf(' %f\t%f\t%f\n', ...
-            lambda_vec(i), error_train(i), error_val(i));
-end
-
-fprintf('Program paused. Press enter to continue.\n');
-pause;
 '''
+lambda_vec, error_train, error_val = validationCurve(X_poly, y, X_poly_val, yval)
+
+
+plt.plot(lambda_vec, error_train, lambda_vec, error_val)
+plt.legend('Train', 'Cross Validation')
+plt.xlabel('lambda')
+plt.ylabel('Error')
+plt.show()
+
+print('lambda\t\tTrain Error\tValidation Error\n')
+for i in range(0,np.size(lambda_vec)):
+	print(lambda_vec[i],'\t', error_train[i],'\t', error_val[i],'\n')
