@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from cofiCostFunc import cofiCostFunc
 from checkCostFunction import checkCostFunction
+from normalizeRatings import normalizeRatings
+import pandas as pd
+import scipy.optimize as opt
+import functools
 
 # Machine Learning Online Class
 #  Exercise 8 | Anomaly Detection and Collaborative Filtering
@@ -93,157 +97,166 @@ print('\nChecking Gradients (without regularization) ... \n')
 #  Check gradients by running checkNNGradients
 checkCostFunction(0)
 
-'''
-%% ========= Part 4: Collaborative Filtering Cost Regularization ========
-%  Now, you should implement regularization for the cost function for
-%  collaborative filtering. You can implement it by adding the cost of
-%  regularization to the original cost computation.
-%
 
-%  Evaluate cost function
-J = cofiCostFunc([X(:) ; Theta(:)], Y, R, num_users, num_movies, ...
-               num_features, 1.5);
-
-fprintf(['Cost at loaded parameters (lambda = 1.5): %f '...
-         '\n(this value should be about 31.34)\n'], J);
-
-fprintf('\nProgram paused. Press enter to continue.\n');
-pause;
+# ========= Part 4: Collaborative Filtering Cost Regularization ========
+#  Now, you should implement regularization for the cost function for
+#  collaborative filtering. You can implement it by adding the cost of
+#  regularization to the original cost computation.
 
 
-%% ======= Part 5: Collaborative Filtering Gradient Regularization ======
-%  Once your cost matches up with ours, you should proceed to implement
-%  regularization for the gradient.
-%
+#  Evaluate cost function
+J = cofiCostFunc(np.hstack((X.flatten(),Theta.flatten())), Y, R, num_users, num_movies, num_features, 1.5)
 
-%
-fprintf('\nChecking Gradients (with regularization) ... \n');
-
-%  Check gradients by running checkNNGradients
-checkCostFunction(1.5);
-
-fprintf('\nProgram paused. Press enter to continue.\n');
-pause;
+print('Cost at loaded parameters (lambda = 1.5): \n(this value should be about 31.34)\n', J[0])
 
 
-%% ============== Part 6: Entering ratings for a new user ===============
-%  Before we will train the collaborative filtering model, we will first
-%  add ratings that correspond to a new user that we just observed. This
-%  part of the code will also allow you to put in your own ratings for the
-%  movies in our dataset!
-%
-movieList = loadMovieList();
-
-%  Initialize my ratings
-my_ratings = zeros(1682, 1);
-
-% Check the file movie_idx.txt for id of each movie in our dataset
-% For example, Toy Story (1995) has ID 1, so to rate it "4", you can set
-my_ratings(1) = 4;
-
-% Or suppose did not enjoy Silence of the Lambs (1991), you can set
-my_ratings(98) = 2;
-
-% We have selected a few movies we liked / did not like and the ratings we
-% gave are as follows:
-my_ratings(7) = 3;
-my_ratings(12)= 5;
-my_ratings(54) = 4;
-my_ratings(64)= 5;
-my_ratings(66)= 3;
-my_ratings(69) = 5;
-my_ratings(183) = 4;
-my_ratings(226) = 5;
-my_ratings(355)= 5;
-
-fprintf('\n\nNew user ratings:\n');
-for i = 1:length(my_ratings)
-    if my_ratings(i) > 0
-        fprintf('Rated %d for %s\n', my_ratings(i), ...
-                 movieList{i});
-    end
-end
-
-fprintf('\nProgram paused. Press enter to continue.\n');
-pause;
+# ======= Part 5: Collaborative Filtering Gradient Regularization ======
+#  Once your cost matches up with ours, you should proceed to implement
+#  regularization for the gradient.
 
 
-%% ================== Part 7: Learning Movie Ratings ====================
-%  Now, you will train the collaborative filtering model on a movie rating
-%  dataset of 1682 movies and 943 users
-%
 
-fprintf('\nTraining collaborative filtering...\n');
+print('\nChecking Gradients (with regularization) ... \n')
 
-%  Load data
-load('ex8_movies.mat');
+#  Check gradients by running checkNNGradients
+checkCostFunction(1.5)
 
-%  Y is a 1682x943 matrix, containing ratings (1-5) of 1682 movies by
-%  943 users
-%
-%  R is a 1682x943 matrix, where R(i,j) = 1 if and only if user j gave a
-%  rating to movie i
 
-%  Add our own ratings to the data matrix
-Y = [my_ratings Y];
-R = [(my_ratings ~= 0) R];
+# ============== Part 6: Entering ratings for a new user ===============
+#  Before we will train the collaborative filtering model, we will first
+#  add ratings that correspond to a new user that we just observed. This
+#  part of the code will also allow you to put in your own ratings for the
+#  movies in our dataset!
+#
 
-%  Normalize Ratings
-[Ynorm, Ymean] = normalizeRatings(Y, R);
+movieList = pd.read_csv(ml_dir+'movie_ids.txt', delimiter=r"^[^\s]*\s" ,header = None)
+movieList = movieList.values[:,1]
 
-%  Useful Values
-num_users = size(Y, 2);
-num_movies = size(Y, 1);
-num_features = 10;
+#  Initialize my ratings
+my_ratings = np.zeros((1682,))
 
-% Set Initial Parameters (Theta, X)
-X = randn(num_movies, num_features);
-Theta = randn(num_users, num_features);
+# Check the file movie_idx.txt for id of each movie in our dataset
+# For example, Toy Story (1995) has ID 1, so to rate it "4", you can set
+my_ratings[0] = 1
 
-initial_parameters = [X(:); Theta(:)];
+# Or suppose did not enjoy Silence of the Lambs (1991), you can set
+my_ratings[97] = 2
 
-% Set options for fmincg
-options = optimset('GradObj', 'on', 'MaxIter', 100);
+# We have selected a few movies we liked / did not like and the ratings we
+# gave are as follows:
+my_ratings[96] = 5
+my_ratings[6] = 1
+my_ratings[11]= 1
+my_ratings[53] = 1
+my_ratings[63]= 1
+my_ratings[65]= 1
+my_ratings[68] = 4
+my_ratings[182] = 1
+my_ratings[225] = 1
+my_ratings[354]= 1
 
-% Set Regularization
-lambda = 10;
-theta = fmincg (@(t)(cofiCostFunc(t, Ynorm, R, num_users, num_movies, ...
-                                num_features, lambda)), ...
-                initial_parameters, options);
+my_ratings[466]= 5
+my_ratings[520]= 5
+my_ratings[522]= 5
+my_ratings[549]= 5
+my_ratings[567]= 5
+my_ratings[575]= 5
+my_ratings[688]= 5
+my_ratings[55]= 5
+my_ratings[1088]= 5
+my_ratings[54]= 5
 
-% Unfold the returned theta back into U and W
-X = reshape(theta(1:num_movies*num_features), num_movies, num_features);
-Theta = reshape(theta(num_movies*num_features+1:end), ...
-                num_users, num_features);
 
-fprintf('Recommender system learning completed.\n');
 
-fprintf('\nProgram paused. Press enter to continue.\n');
-pause;
+print('\n\nNew user ratings:\n')
+for i in np.arange(my_ratings.shape[0]):
+    if my_ratings[i] > 0:
+        print('Rated ', my_ratings[i], 'for ',movieList[i])
 
-%% ================== Part 8: Recommendation for you ====================
-%  After training the model, you can now make recommendations by computing
-%  the predictions matrix.
-%
 
-p = X * Theta';
-my_predictions = p(:,1) + Ymean;
 
-movieList = loadMovieList();
+# ================== Part 7: Learning Movie Ratings ====================
+#  Now, you will train the collaborative filtering model on a movie rating
+#  dataset of 1682 movies and 943 users
 
-[r, ix] = sort(my_predictions, 'descend');
-fprintf('\nTop recommendations for you:\n');
-for i=1:10
-    j = ix(i);
-    fprintf('Predicting rating %.1f for movie %s\n', my_predictions(j), ...
-            movieList{j});
-end
 
-fprintf('\n\nOriginal ratings provided:\n');
-for i = 1:length(my_ratings)
-    if my_ratings(i) > 0
-        fprintf('Rated %d for %s\n', my_ratings(i), ...
-                 movieList{i});
-    end
-end
-'''
+print('\nTraining collaborative filtering...\n')
+#load('ex8_movies.mat');
+data = sio.loadmat(ml_dir+'ex8_movies.mat') # % training data stored in arrays X, y
+Y = data['Y']
+R = data['R']
+
+#  Y is a 1682x943 matrix, containing ratings (1-5) of 1682 movies by
+#  943 users
+
+#  R is a 1682x943 matrix, where R(i,j) = 1 if and only if user j gave a
+#  rating to movie i
+
+#  Add our own ratings to the data matrix
+Y = np.hstack((my_ratings.reshape(-1,1),Y))
+mask  = my_ratings!=0
+R = np.hstack((mask.reshape(-1,1),R))
+#R = [(my_ratings ~= 0) R];
+
+
+#  Normalize Ratings
+Ynorm, Ymean = normalizeRatings(Y, R)
+
+
+#  Useful Values
+num_users = Y.shape[1]
+num_movies = Y.shape[0]
+num_features = 10
+
+# Set Initial Parameters (Theta, X)
+X = np.random.rand(num_movies, num_features)
+Theta = np.random.rand(num_users, num_features)
+
+initial_parameters = np.hstack((np.hstack((X.flatten(),Theta.flatten()))))
+
+
+# Set options for fmincg
+#options = optimset('GradObj', 'on', 'MaxIter', 100);
+
+# Set Regularization
+lambda_ = 10
+#theta = fmincg (@(t)(cofiCostFunc(t, Ynorm, R, num_users, num_movies, ...
+#                                num_features, lambda)), ...
+#                initial_parameters, options);
+
+#costFunc = functools.partial(nnCostFunction, input_layer_size = input_layer_size, hidden_layer_size = hidden_layer_size, num_labels = num_labels, X = X, y = y, _lambda = _lambda)
+costFunc = functools.partial(cofiCostFunc, Y=Y, R=R, num_users=num_users, num_movies=num_movies,
+                             num_features=num_features, lambda_=0)
+
+options = {'disp': False, 'gtol': 1e-05, 'eps': 1.4901161193847656e-08, 'return_all': False, 'maxiter': 500}
+
+theta = opt.minimize(costFunc, initial_parameters, method='CG',jac = True, options=options)
+theta = theta.x
+# Unfold the returned theta back into U and W
+
+X = np.reshape(theta[0:num_movies * num_features], (num_movies, num_features))
+Theta = np.reshape(theta[num_movies * num_features:], (num_users, num_features))
+
+print('Recommender system learning completed.\n')
+
+
+# ================== Part 8: Recommendation for you ====================
+#  After training the model, you can now make recommendations by computing
+#  the predictions matrix.
+
+
+p = X.dot(Theta.T)
+my_predictions = p[:,0].reshape(-1,1) + Ymean
+
+
+idx = np.argsort(my_predictions.flatten())[::-1]
+print('\nTop recommendations for you:\n')
+for i in range(10):
+    j = idx[i]
+    print('Predicting rating ', my_predictions[j,0],' for movie ', movieList[j])
+
+
+print('\n\nOriginal ratings provided:\n')
+for i in range(my_ratings.shape[0]):
+    if my_ratings[i] > 0:
+        print('Rated', my_ratings[i],' for ', movieList[i])
